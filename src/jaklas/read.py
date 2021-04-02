@@ -1,4 +1,4 @@
-from typing import Dict, Tuple
+from typing import Dict
 
 import laspy
 # import pylas
@@ -8,18 +8,6 @@ from .header import Header
 
 SCALING = "scaling"
 OFFSET = "offset"
-
-
-def _scale_and_offset(lasfile: laspy.file.File) -> Tuple[dict, dict]:
-    input_scale = lasfile.header.scale
-    input_offset = lasfile.header.offset
-    SCALING = {"x": input_scale[0],
-               "y": input_scale[1],
-               "z": input_scale[2]}
-    OFFSET = {"x": input_offset[0],
-              "y": input_offset[1],
-              "z": input_offset[2]}
-    return SCALING, OFFSET
 
 
 def read(
@@ -37,11 +25,11 @@ def read(
     data = {}
 
     # las = pylas.read(str(path))
-    las = laspy.file.File(path, mode='r')
-
-    x = (las.x - offset[0]).astype(xyz_dtype)
-    y = (las.y - offset[1]).astype(xyz_dtype)
-    z = (las.z - offset[2]).astype(xyz_dtype)
+    las_file:laspy.file.File = laspy.file.File(path)
+    print(las_file)
+    x = (las_file.x - offset[0]).astype(xyz_dtype)
+    y = (las_file.y - offset[1]).astype(xyz_dtype)
+    z = (las_file.z - offset[2]).astype(xyz_dtype)
 
     if combine_xyz:
         data["xyz"] = np.hstack([x[np.newaxis].T, y[np.newaxis].T, z[np.newaxis].T])
@@ -53,15 +41,15 @@ def read(
     del x, y, z
 
     if other_dims is None:
-        other_dims = set(i.name for i in las.points['point'].dtype) - set("XYZ")
+        other_dims = set(i for i in las_file.points['point'].dtype.names) - set("XYZ")
 
     print("OTHER_DIMS",other_dims)
 
     for dim in other_dims:
-        if not ignore_missing_dims and not hasattr(las, dim):
+        if not ignore_missing_dims and not hasattr(las_file, dim):
             raise KeyError(f"Dimension not found in file {dim}")
 
-        data[dim] = getattr(las, dim)
+        data[dim] = getattr(las_file, dim)
 
     return data
 
