@@ -24,9 +24,7 @@ def read(
 
     data = {}
 
-    # las = pylas.read(str(path))
     las_file:laspy.file.File = laspy.file.File(path)
-    print(las_file)
     x = (las_file.x - offset[0]).astype(xyz_dtype)
     y = (las_file.y - offset[1]).astype(xyz_dtype)
     z = (las_file.z - offset[2]).astype(xyz_dtype)
@@ -42,8 +40,6 @@ def read(
 
     if other_dims is None:
         other_dims = set(i for i in las_file.points['point'].dtype.names) - set("XYZ")
-
-    print("OTHER_DIMS",other_dims)
 
     for dim in other_dims:
         if not ignore_missing_dims and not hasattr(las_file, dim):
